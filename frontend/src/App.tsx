@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import axios from 'axios'
 import { supabase } from './supabaseClient'
 import Auth from './Auth'
 
@@ -20,8 +19,6 @@ interface Video {
   url: string;
   user_id?: string;
 }
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
   const [session, setSession] = useState<any>(null);
