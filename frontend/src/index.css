@@ -1,0 +1,232 @@
+:root {
+  --bg-color: #f1f5f9;
+  --header-bg: #ffffff;
+  --card-bg: #ffffff;
+  --text-color: #242529;
+  --text-secondary: #8a96a3;
+  --accent-color: #008fca;
+  --accent-hover: #007bb1;
+  --border-color: #eef1f4;
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 25px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  padding: 10px 20px;
+  font-weight: 600;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 40px;
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 60px;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-color);
+}
+
+.logo span {
+  color: var(--text-color);
+}
+
+.upload-btn {
+  background-color: var(--accent-color);
+  color: #fff;
+  text-transform: none;
+}
+
+.upload-btn:hover {
+  background-color: var(--accent-hover);
+}
+
+/* Hero Carousel (Infinite Loop) */
+.hero-container {
+  position: relative;
+  height: 500px;
+  width: 100%;
+  overflow: hidden;
+  background-color: #000;
+  margin-bottom: -60px;
+}
+
+.hero-track {
+  display: flex;
+  height: 100%;
+  width: max-content;
+  animation: scroll-infinite 40s linear infinite;
+  will-change: transform;
+}
+
+@keyframes scroll-infinite {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.hero-track:hover {
+  animation-play-state: paused;
+}
+
+.hero-slide {
+  flex: 0 0 auto;
+  height: 100%;
+  position: relative;
+}
+
+.hero-slide img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  background-color: #000;
+  display: block;
+}
+
+.profile-section {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid var(--header-bg);
+  background-color: #ccc;
+  margin: 0 auto;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+
+.profile-info {
+  margin-top: 10px;
+}
+
+.profile-info h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.profile-info p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.video-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.video-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.video-card-header {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mini-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #ddd;
+  background-size: cover;
+}
+
+.video-thumbnail {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.video-info {
+  padding: 15px;
+}
+
+.video-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.video-meta {
+  color: var(--accent-color);
+  font-weight: 600;
+  margin-top: 5px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #000;
+  width: 100%;
+  max-width: 600px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: #fff;
+  font-size: 1.5rem;
+}
+
+video {
+  width: 100%;
+}
