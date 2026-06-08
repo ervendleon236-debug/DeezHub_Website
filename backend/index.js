@@ -5,7 +5,8 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 // Enable CORS
 app.use(cors());
@@ -51,7 +52,7 @@ app.get('/api/videos', (req, res) => {
         const videos = videoFiles.map(file => ({
             id: file,
             name: file, // You could potentially store metadata in a JSON file/DB later
-            url: `http://localhost:${PORT}/uploads/${file}`
+            url: `${BASE_URL}/uploads/${file}`
         }));
 
         res.json(videos);
@@ -69,7 +70,7 @@ app.post('/api/videos', upload.single('video'), (req, res) => {
         video: {
             id: req.file.filename,
             name: req.file.filename,
-            url: `http://localhost:${PORT}/uploads/${req.file.filename}`
+            url: `${BASE_URL}/uploads/${req.file.filename}`
         }
     });
 });

@@ -18,6 +18,8 @@ interface Video {
   url: string;
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 function App() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
@@ -26,7 +28,7 @@ function App() {
 
   const fetchVideos = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/videos');
+      const response = await axios.get(`${API_URL}/api/videos`);
       setVideos(response.data);
     } catch (error) {
       console.error('Error fetching videos:', error);
@@ -46,7 +48,7 @@ function App() {
 
     setUploading(true);
     try {
-      await axios.post('http://localhost:5000/api/videos', formData, {
+      await axios.post(`${API_URL}/api/videos`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       fetchVideos();
