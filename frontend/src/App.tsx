@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import { supabase } from './supabaseClient'
+import Auth from './Auth'
 
 // Provided facial images
 import img1 from './assets/hero-bg.jpg'
@@ -16,20 +18,41 @@ interface Video {
   id: string;
   name: string;
   url: string;
+  user_id?: string;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
+  const [session, setSession] = useState<any>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
   const fetchVideos = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/videos`);
-      setVideos(response.data);
+      const { data, error } = await supabase
+        .from('videos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setVideos(data || []);
     } catch (error) {
       console.error('Error fetching videos:', error);
     }
@@ -37,34 +60,89 @@ function App() {
 
   useEffect(() => {
     fetchVideos();
-  }, []);
+  }, [session]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('video', file);
+    if (!file || !session) return;
 
     setUploading(true);
     try {
-      await axios.post(`${API_URL}/api/videos`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${session.user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(filePath);
+
+      const { error: dbError } = await supabase
+        .from('videos')
+        .insert([
+          { 
+            name: file.name, 
+            url: publicUrl, 
+            user_id: session.user.id 
+          }
+        ]);
+
+      if (dbError) throw dbError;
+      
       fetchVideos();
     } catch (error) {
       console.error('Error uploading video:', error);
+      alert('Upload failed: ' + (error as any).message);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
+  const deleteVideo = async (video: Video) => {
+    if (!window.confirm('Are you sure you want to delete this video?')) return;
+    
+    try {
+      // In a real app, you'd also delete the file from storage
+      // For now, let's just delete the database entry
+      const { error } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', video.id);
+
+      if (error) throw error;
+      fetchVideos();
+      if (selectedVideo?.id === video.id) setSelectedVideo(null);
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      alert('Delete failed');
+    }
+  };
+
+  const isAdmin = session?.user?.email === 'ervendleon236@gmail.com'; // Hardcoded admin for you
+
+  if (!session) {
+    return (
+      <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+          <div className="logo" style={{ textAlign: 'center', marginBottom: '30px' }}>Deez<span>Hub</span></div>
+          <Auth />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh' }}>
       <header>
         <div className="logo">Deez<span>Hub</span></div>
-        <div style={{ display: 'flex', gap: '15px' }}>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.9rem', color: '#666' }}>{session.user.email}</span>
           <input 
             type="file" 
             accept="video/*" 
@@ -78,6 +156,12 @@ function App() {
             disabled={uploading}
           >
             {uploading ? 'Posting...' : 'New Post'}
+          </button>
+          <button 
+            onClick={() => supabase.auth.signOut()}
+            style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.9rem' }}
+          >
+            Sign Out
           </button>
         </div>
       </header>
@@ -116,9 +200,19 @@ function App() {
                 className="video-card" 
                 onClick={() => setSelectedVideo(video)}
               >
-                <div className="video-card-header">
-                  <div className="mini-avatar" style={{ backgroundImage: `url(${img1})` }}></div>
-                  <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>Deez "Spicy" Satti</div>
+                <div className="video-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="mini-avatar" style={{ backgroundImage: `url(${img1})` }}></div>
+                    <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>User</div>
+                  </div>
+                  {(isAdmin || video.user_id === session.user.id) && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); deleteVideo(video); }}
+                      style={{ background: 'none', border: 'none', color: '#e50914', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
                 <div className="video-thumbnail">
                   <span style={{ fontSize: '3rem', opacity: 0.2 }}>▶</span>
@@ -136,9 +230,16 @@ function App() {
       {selectedVideo && (
         <div className="modal-overlay" onClick={() => setSelectedVideo(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <video controls autoPlay src={selectedVideo.url}>
+            <video controls autoPlay src={selectedVideo.url} style={{ width: '100%', maxHeight: '70vh' }}>
               Your browser does not support the video tag.
             </video>
+            <div style={{ padding: '20px', backgroundColor: 'white' }}>
+              <h3>{selectedVideo.name}</h3>
+              <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>❤️ Like</button>
+                <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>💬 Comment</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
