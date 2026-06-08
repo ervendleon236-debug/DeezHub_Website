@@ -20,9 +20,48 @@ export default function Auth() {
     setLoading(false);
   };
 
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) alert(error.message);
+  };
+
   return (
     <div className="auth-container" style={{ padding: '20px', maxWidth: '400px', margin: 'auto', textAlign: 'center' }}>
       <h2>{isSignUp ? 'Create Account' : 'Sign In'}</h2>
+      
+      <button 
+        onClick={handleGoogleLogin}
+        style={{ 
+          width: '100%', 
+          padding: '10px', 
+          marginBottom: '20px', 
+          backgroundColor: 'white', 
+          color: '#444', 
+          border: '1px solid #ccc', 
+          borderRadius: '4px', 
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          fontWeight: 'bold'
+        }}
+      >
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="18" />
+        Continue with Google
+      </button>
+
+      <div style={{ margin: '20px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ flex: 1, height: '1px', backgroundColor: '#eee' }}></div>
+        <span style={{ color: '#999', fontSize: '0.8rem' }}>OR</span>
+        <div style={{ flex: 1, height: '1px', backgroundColor: '#eee' }}></div>
+      </div>
+
       <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <input 
           type="email" 
