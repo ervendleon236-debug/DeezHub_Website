@@ -11,7 +11,6 @@ import img5 from './assets/IMG_7370.JPG'
 import img6 from './assets/IMG_7667.JPG'
 
 const bannerImages = [img1, img2, img3, img4, img5, img6];
-const infiniteImages = [...bannerImages, ...bannerImages];
 
 interface Video {
   id: string;
@@ -27,6 +26,27 @@ function App() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (heroRef.current && e.deltaY !== 0) {
+        e.preventDefault();
+        heroRef.current.scrollLeft += e.deltaY;
+      }
+    };
+
+    const heroEl = heroRef.current;
+    if (heroEl) {
+      heroEl.addEventListener('wheel', handleWheel, { passive: false });
+    }
+
+    return () => {
+      if (heroEl) {
+        heroEl.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -164,9 +184,9 @@ function App() {
         </div>
       </header>
 
-      <section className="hero-container">
+      <section className="hero-container" ref={heroRef}>
         <div className="hero-track">
-          {infiniteImages.map((img, index) => (
+          {bannerImages.map((img, index) => (
             <div key={index} className="hero-slide">
               <img src={img} alt={`Slide ${index}`} />
             </div>

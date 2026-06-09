@@ -72,31 +72,28 @@ header {
   background-color: var(--accent-hover);
 }
 
-/* Hero Carousel (Infinite Loop) */
+/* Hero Carousel (Scrollable) */
 .hero-container {
   position: relative;
   height: 500px;
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   background-color: #000;
   margin-bottom: -60px;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  display: flex;
+}
+
+.hero-container::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari */
 }
 
 .hero-track {
   display: flex;
   height: 100%;
   width: max-content;
-  animation: scroll-infinite 40s linear infinite;
-  will-change: transform;
-}
-
-@keyframes scroll-infinite {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.hero-track:hover {
-  animation-play-state: paused;
 }
 
 .hero-slide {
@@ -111,6 +108,8 @@ header {
   object-fit: contain;
   background-color: #000;
   display: block;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .profile-section {
