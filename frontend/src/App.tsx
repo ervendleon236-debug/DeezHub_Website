@@ -11,7 +11,7 @@ import img5 from './assets/IMG_7370.JPG'
 import img6 from './assets/IMG_7667.JPG'
 
 const bannerImages = [img1, img2, img3, img4, img5, img6];
-// We triple the images to ensure seamless looping
+// Triple the images for a seamless loop
 const infiniteImages = [...bannerImages, ...bannerImages, ...bannerImages];
 
 interface Comment {
@@ -62,56 +62,20 @@ function App() {
     }
   }, [darkMode]);
 
-  // Robust Infinite Scroll Logic
+  // Handle Manual Scrolling (Mouse Wheel)
   useEffect(() => {
     const heroEl = heroRef.current;
     if (!heroEl) return;
 
-    let requestRef: number;
-    const speed = 0.8; // Smooth auto-scroll speed
-
-    const updateScroll = () => {
-      if (heroEl) {
-        // Auto-increment scroll
-        heroEl.scrollLeft += speed;
-
-        // Reset logic: Since we have 3 sets, we loop when we enter the 1st or 3rd set
-        const totalWidth = heroEl.scrollWidth;
-        const setWidth = totalWidth / 3;
-
-        if (heroEl.scrollLeft >= setWidth * 2) {
-          // If we reached the start of the 3rd set, jump back to the start of the 2nd set
-          heroEl.scrollLeft -= setWidth;
-        } else if (heroEl.scrollLeft <= 0) {
-          // If we somehow go backwards to the very start, jump to the start of the 2nd set
-          heroEl.scrollLeft += setWidth;
-        }
-      }
-      requestRef = requestAnimationFrame(updateScroll);
-    };
-
-    // Give images a moment to load so scrollWidth is accurate
-    const timer = setTimeout(() => {
-      const setWidth = heroEl.scrollWidth / 3;
-      heroEl.scrollLeft = setWidth;
-      requestRef = requestAnimationFrame(updateScroll);
-    }, 500);
-
     const handleWheel = (e: WheelEvent) => {
       if (e.deltaY !== 0) {
-        // Manual scrolling is additive
         heroEl.scrollLeft += e.deltaY;
         e.preventDefault();
       }
     };
 
     heroEl.addEventListener('wheel', handleWheel, { passive: false });
-
-    return () => {
-      clearTimeout(timer);
-      cancelAnimationFrame(requestRef);
-      heroEl.removeEventListener('wheel', handleWheel);
-    };
+    return () => heroEl.removeEventListener('wheel', handleWheel);
   }, []);
 
   useEffect(() => {

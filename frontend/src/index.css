@@ -130,7 +130,7 @@ header {
   opacity: 0.9;
 }
 
-/* Hero Carousel (Scrollable & Auto-Scrolling) */
+/* Hero Carousel (Silky Smooth Infinite Scroll) */
 .hero-container {
   position: relative;
   height: 500px;
@@ -152,7 +152,18 @@ header {
   display: flex;
   height: 100%;
   width: max-content;
+  animation: scroll-linear 30s linear infinite;
   will-change: transform;
+}
+
+@keyframes scroll-linear {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); } /* Loop back after the first set */
+}
+
+/* Pause animation on manual interaction (optional, but smoother for users) */
+.hero-container:active .hero-track {
+  animation-play-state: paused;
 }
 
 .hero-slide {
