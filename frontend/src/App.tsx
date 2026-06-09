@@ -39,6 +39,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
   });
+  const [isMuted, setIsMuted] = useState(true);
   
   // New States
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -265,14 +266,22 @@ function App() {
                 {video.type === 'image' ? (
                   <img src={video.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <video 
-                    src={video.url} 
-                    autoPlay 
-                    muted 
-                    loop 
-                    playsInline 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  />
+                  <>
+                    <video 
+                      src={video.url} 
+                      autoPlay 
+                      muted={isMuted} 
+                      loop 
+                      playsInline 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                    <button 
+                      className="mute-btn" 
+                      onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
+                    >
+                      {isMuted ? '🔇' : '🔊'}
+                    </button>
+                  </>
                 )}
               </div>
               <div className="video-info">
