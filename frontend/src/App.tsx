@@ -181,7 +181,7 @@ function App() {
         />
         <div className="profile-info">
           <h2>Deez "Spicy" Satti</h2>
-          <p>@AbdelBatti • 6.7 million likes • Premium Creator</p>
+          <p>@AbdelBatti • 6.7M Likes • Premium Creator</p>
         </div>
       </div>
 
