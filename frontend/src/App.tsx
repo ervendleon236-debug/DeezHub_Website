@@ -18,6 +18,7 @@ interface Video {
   name: string;
   url: string;
   user_id?: string;
+  type?: 'video' | 'image';
 }
 
 function App() {
@@ -227,14 +228,41 @@ function App() {
       {selectedVideo && (
         <div className="modal-overlay" onClick={() => setSelectedVideo(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <video controls autoPlay src={selectedVideo.url} style={{ width: '100%', maxHeight: '70vh' }}>
-              Your browser does not support the video tag.
-            </video>
+            {selectedVideo.type === 'image' ? (
+              <img src={selectedVideo.url} alt={selectedVideo.name} style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }} />
+            ) : (
+              <video controls autoPlay src={selectedVideo.url} style={{ width: '100%', maxHeight: '70vh' }}>
+                Your browser does not support the video tag.
+              </video>
+            )}
             <div style={{ padding: '20px', backgroundColor: 'white' }}>
               <h3>{selectedVideo.name}</h3>
               <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
                 <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>❤️ Like</button>
                 <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>💬 Comment</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default App
+'20px', cursor: 'pointer' }}>❤️ Like</button>
+                <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>💬 Comment</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default App
+: '20px', cursor: 'pointer' }}>💬 Comment</button>
               </div>
             </div>
           </div>
