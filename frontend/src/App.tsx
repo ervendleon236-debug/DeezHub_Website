@@ -25,8 +25,21 @@ function App() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('theme') === 'dark';
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
@@ -160,10 +173,17 @@ function App() {
       <header>
         <div className="logo">Deez<span>Hub</span></div>
         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          <div 
+            className="theme-toggle" 
+            onClick={() => setDarkMode(!darkMode)}
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            <div className="toggle-circle"></div>
+          </div>
           <span style={{ fontSize: '0.9rem', color: '#666' }}>{session.user.email}</span>
           <input 
             type="file" 
-            accept="video/*" 
+            accept="video/*,image/*" 
             ref={fileInputRef} 
             onChange={handleFileChange} 
             style={{ display: 'none' }}

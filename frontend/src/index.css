@@ -7,7 +7,21 @@
   --accent-color: #008fca;
   --accent-hover: #007bb1;
   --border-color: #eef1f4;
+  --modal-bg: #ffffff;
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --transition-speed: 0.3s;
+}
+
+body.dark-mode {
+  --bg-color: #121212;
+  --header-bg: #1a1a1a;
+  --card-bg: #1e1e1e;
+  --text-color: #ffffff;
+  --text-secondary: #b0b0b0;
+  --accent-color: #ff8c00; /* Orange */
+  --accent-hover: #e07b00;
+  --border-color: #333333;
+  --modal-bg: #1a1a1a;
 }
 
 * {
@@ -21,22 +35,38 @@ body {
   color: var(--text-color);
   font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
-button {
+/* Dark Mode Toggle */
+.theme-toggle {
+  width: 50px;
+  height: 26px;
+  background-color: #ccc;
+  border-radius: 15px;
+  position: relative;
   cursor: pointer;
-  border: none;
-  border-radius: 25px;
-  font-family: inherit;
-  transition: all 0.2s ease;
-  padding: 10px 20px;
-  font-weight: 600;
+  transition: background-color 0.3s;
+  padding: 0;
 }
 
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
+.dark-mode .theme-toggle {
+  background-color: var(--accent-color);
+}
+
+.toggle-circle {
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s;
+}
+
+.dark-mode .toggle-circle {
+  transform: translateX(24px);
 }
 
 header {
@@ -50,16 +80,19 @@ header {
   top: 0;
   z-index: 100;
   height: 60px;
+  transition: background-color var(--transition-speed), border-color var(--transition-speed);
 }
 
 .logo {
   font-size: 1.5rem;
   font-weight: 800;
   color: var(--accent-color);
+  transition: color var(--transition-speed);
 }
 
 .logo span {
   color: var(--text-color);
+  transition: color var(--transition-speed);
 }
 
 .upload-btn {
@@ -129,6 +162,7 @@ header {
   overflow: hidden;
   background-size: cover;
   background-position: center;
+  transition: border-color var(--transition-speed);
 }
 
 .profile-info {
@@ -143,6 +177,7 @@ header {
 .profile-info p {
   color: var(--text-secondary);
   font-size: 0.95rem;
+  transition: color var(--transition-speed);
 }
 
 .video-grid {
@@ -156,6 +191,7 @@ header {
   border: 1px solid var(--border-color);
   overflow: hidden;
   cursor: pointer;
+  transition: background-color var(--transition-speed), border-color var(--transition-speed);
 }
 
 .video-card-header {
@@ -181,6 +217,11 @@ header {
   justify-content: center;
   align-items: center;
   position: relative;
+  transition: background-color var(--transition-speed);
+}
+
+.dark-mode .video-thumbnail {
+  background-color: #2a2a2a;
 }
 
 .video-info {
@@ -191,12 +232,14 @@ header {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-color);
+  transition: color var(--transition-speed);
 }
 
 .video-meta {
   color: var(--accent-color);
   font-weight: 600;
   margin-top: 5px;
+  transition: color var(--transition-speed);
 }
 
 .modal-overlay {
@@ -213,9 +256,10 @@ header {
 }
 
 .modal-content {
-  background-color: #000;
+  background-color: var(--modal-bg);
   width: 100%;
   max-width: 600px;
+  transition: background-color var(--transition-speed);
 }
 
 .close-btn {
@@ -229,3 +273,4 @@ header {
 video {
   width: 100%;
 }
+
