@@ -87,12 +87,26 @@ header {
   font-size: 1.5rem;
   font-weight: 800;
   color: var(--accent-color);
-  transition: color var(--transition-speed);
+  transition: all var(--transition-speed);
+  display: inline-flex;
+  align-items: center;
 }
 
 .logo span {
   color: var(--text-color);
-  transition: color var(--transition-speed);
+  transition: all var(--transition-speed);
+}
+
+.dark-mode .logo {
+  color: #ffffff; /* 'Deez' becomes white */
+}
+
+.dark-mode .logo span {
+  background-color: #ff8c00; /* 'Hub' box becomes orange */
+  color: #000000; /* 'Hub' text becomes black */
+  padding: 0 4px;
+  border-radius: 4px;
+  margin-left: 2px;
 }
 
 .upload-btn {
