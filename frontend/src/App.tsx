@@ -11,6 +11,7 @@ import img5 from './assets/IMG_7370.JPG'
 import img6 from './assets/IMG_7667.JPG'
 
 const bannerImages = [img1, img2, img3, img4, img5, img6];
+// We triple the images to ensure seamless looping
 const infiniteImages = [...bannerImages, ...bannerImages, ...bannerImages];
 
 interface Comment {
@@ -41,7 +42,6 @@ function App() {
   });
   const [isMuted, setIsMuted] = useState(true);
   
-  // New States
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [newPostCaption, setNewPostCaption] = useState('');
   const [activeMenuId, setActiveMenuMenuId] = useState<string | null>(null);
@@ -62,47 +62,53 @@ function App() {
     }
   }, [darkMode]);
 
+  // Robust Infinite Scroll Logic
   useEffect(() => {
     const heroEl = heroRef.current;
     if (!heroEl) return;
 
     let requestRef: number;
-    const speed = 0.5; // Adjusted for smoothness
+    const speed = 0.8; // Smooth auto-scroll speed
 
-    const scroll = () => {
+    const updateScroll = () => {
       if (heroEl) {
+        // Auto-increment scroll
         heroEl.scrollLeft += speed;
-        
-        const setWidth = heroEl.scrollWidth / 3;
+
+        // Reset logic: Since we have 3 sets, we loop when we enter the 1st or 3rd set
+        const totalWidth = heroEl.scrollWidth;
+        const setWidth = totalWidth / 3;
+
         if (heroEl.scrollLeft >= setWidth * 2) {
+          // If we reached the start of the 3rd set, jump back to the start of the 2nd set
           heroEl.scrollLeft -= setWidth;
         } else if (heroEl.scrollLeft <= 0) {
+          // If we somehow go backwards to the very start, jump to the start of the 2nd set
           heroEl.scrollLeft += setWidth;
         }
       }
-      requestRef = requestAnimationFrame(scroll);
+      requestRef = requestAnimationFrame(updateScroll);
     };
 
-    // Initialize position to the middle set
-    setTimeout(() => {
-        if (heroEl) {
-            const setWidth = heroEl.scrollWidth / 3;
-            heroEl.scrollLeft = setWidth;
-        }
-    }, 100);
-
-    requestRef = requestAnimationFrame(scroll);
+    // Give images a moment to load so scrollWidth is accurate
+    const timer = setTimeout(() => {
+      const setWidth = heroEl.scrollWidth / 3;
+      heroEl.scrollLeft = setWidth;
+      requestRef = requestAnimationFrame(updateScroll);
+    }, 500);
 
     const handleWheel = (e: WheelEvent) => {
       if (e.deltaY !== 0) {
-        e.preventDefault();
+        // Manual scrolling is additive
         heroEl.scrollLeft += e.deltaY;
+        e.preventDefault();
       }
     };
 
     heroEl.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
+      clearTimeout(timer);
       cancelAnimationFrame(requestRef);
       heroEl.removeEventListener('wheel', handleWheel);
     };
@@ -118,7 +124,7 @@ function App() {
     try {
       const { data, error } = await supabase
         .from('videos')
-        .select('*, likes(count)')
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
