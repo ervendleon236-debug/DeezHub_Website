@@ -108,7 +108,7 @@ header {
   background-color: #ff8c00; /* 'Hub' box becomes orange */
   color: #000000; /* 'Hub' text stays black */
   padding: 0 4px;
-  border-radius: 4px;
+  border-radius: 6px;
   margin-left: 2px;
 }
 
@@ -116,7 +116,7 @@ header {
   background-color: #008fca; /* Blue for light mode */
   color: #fff;
   text-transform: none;
-  border-radius: 4px; /* Rectangular box like the logo */
+  border-radius: 6px; /* Rectangular box like the logo */
   padding: 8px 16px;
 }
 
