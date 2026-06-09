@@ -86,24 +86,27 @@ header {
 .logo {
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--accent-color);
+  color: #008fca; /* Blue for 'Deez' in light mode */
   transition: all var(--transition-speed);
   display: inline-flex;
   align-items: center;
 }
 
 .logo span {
-  color: var(--text-color);
+  color: #000000; /* Black for 'Hub' in light mode */
   transition: all var(--transition-speed);
+  padding: 0;
+  border-radius: 0;
+  background-color: transparent;
 }
 
 .dark-mode .logo {
-  color: #ffffff; /* 'Deez' becomes white */
+  color: #ffffff; /* 'Deez' becomes white in dark mode */
 }
 
 .dark-mode .logo span {
   background-color: #ff8c00; /* 'Hub' box becomes orange */
-  color: #000000; /* 'Hub' text becomes black */
+  color: #000000; /* 'Hub' text stays black */
   padding: 0 4px;
   border-radius: 4px;
   margin-left: 2px;
