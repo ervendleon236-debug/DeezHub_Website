@@ -13,12 +13,22 @@ import img6 from './assets/IMG_7667.JPG'
 const bannerImages = [img1, img2, img3, img4, img5, img6];
 const infiniteImages = [...bannerImages, ...bannerImages];
 
+interface Comment {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+}
+
 interface Video {
   id: string;
   name: string;
   url: string;
   user_id?: string;
   type?: 'video' | 'image';
+  caption?: string;
+  like_count?: number;
+  has_liked?: boolean;
 }
 
 function App() {
@@ -29,6 +39,15 @@ function App() {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
   });
+  
+  // New States
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [newPostCaption, setNewPostCaption] = useState('');
+  const [activeMenuId, setActiveMenuMenuId] = useState<string | null>(null);
+  const [videoToDelete, setVideoToDelete] = useState<Video | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewPostComment] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
@@ -49,30 +68,18 @@ function App() {
         heroRef.current.scrollLeft += e.deltaY;
       }
     };
-
     const heroEl = heroRef.current;
     if (heroEl) {
       heroEl.addEventListener('wheel', handleWheel, { passive: false });
     }
-
     return () => {
-      if (heroEl) {
-        heroEl.removeEventListener('wheel', handleWheel);
-      }
+      if (heroEl) heroEl.removeEventListener('wheel', handleWheel);
     };
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session))
     return () => subscription.unsubscribe()
   }, [])
 
@@ -80,11 +87,23 @@ function App() {
     try {
       const { data, error } = await supabase
         .from('videos')
-        .select('*')
+        .select('*, likes(count)')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setVideos(data || []);
+
+      const videosWithLikes = await Promise.all((data || []).map(async (v) => {
+        const { count } = await supabase.from('likes').select('*', { count: 'exact', head: true }).eq('video_id', v.id);
+        const { data: userLike } = session ? await supabase.from('likes').select('*').eq('video_id', v.id).eq('user_id', session.user.id).single() : { data: null };
+        
+        return {
+          ...v,
+          like_count: count || 0,
+          has_liked: !!userLike
+        };
+      }));
+
+      setVideos(videosWithLikes);
     } catch (error) {
       console.error('Error fetching videos:', error);
     }
@@ -102,64 +121,81 @@ function App() {
     try {
       const fileExt = file.name.split('.').pop()?.toLowerCase();
       const isVideo = ['mp4', 'webm', 'ogg', 'mov'].includes(fileExt || '');
-      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt || '');
-      
-      if (!isVideo && !isImage) {
-        alert('Unsupported file type. Please upload a video or image.');
-        return;
-      }
-
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('videos')
-        .upload(filePath, file);
-
+      const { error: uploadError } = await supabase.storage.from('videos').upload(filePath, file);
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('videos')
-        .getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(filePath);
 
-      const { error: dbError } = await supabase
-        .from('videos')
-        .insert([
-          { 
-            name: file.name, 
-            url: publicUrl, 
-            user_id: session.user.id,
-            type: isVideo ? 'video' : 'image'
-          }
-        ]);
+      const { error: dbError } = await supabase.from('videos').insert([
+        { 
+          name: file.name, 
+          url: publicUrl, 
+          user_id: session.user.id,
+          type: isVideo ? 'video' : 'image',
+          caption: newPostCaption
+        }
+      ]);
 
       if (dbError) throw dbError;
       
+      setIsPostModalOpen(false);
+      setNewPostCaption('');
       fetchVideos();
     } catch (error) {
-      console.error('Error uploading file:', error);
       alert('Upload failed: ' + (error as any).message);
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const deleteVideo = async (video: Video) => {
-    if (!window.confirm('Are you sure you want to delete this post?')) return;
-    
+  const confirmDelete = async () => {
+    if (!videoToDelete) return;
     try {
-      const { error } = await supabase
-        .from('videos')
-        .delete()
-        .eq('id', video.id);
-
+      const { error } = await supabase.from('videos').delete().eq('id', videoToDelete.id);
       if (error) throw error;
+      setVideoToDelete(null);
       fetchVideos();
-      if (selectedVideo?.id === video.id) setSelectedVideo(null);
+      if (selectedVideo?.id === videoToDelete.id) setSelectedVideo(null);
     } catch (error) {
-      console.error('Error deleting post:', error);
       alert('Delete failed');
+    }
+  };
+
+  const handleLike = async (e: React.MouseEvent, video: Video) => {
+    e.stopPropagation();
+    if (!session) return alert('Please sign in to like!');
+
+    if (video.has_liked) {
+      await supabase.from('likes').delete().eq('video_id', video.id).eq('user_id', session.user.id);
+    } else {
+      await supabase.from('likes').insert([{ video_id: video.id, user_id: session.user.id }]);
+    }
+    fetchVideos();
+    if (selectedVideo?.id === video.id) {
+      setSelectedVideo({ ...video, has_liked: !video.has_liked, like_count: (video.like_count || 0) + (video.has_liked ? -1 : 1) });
+    }
+  };
+
+  const fetchComments = async (videoId: string) => {
+    const { data } = await supabase.from('comments').select('*').eq('video_id', videoId).order('created_at', { ascending: true });
+    setComments(data || []);
+  };
+
+  useEffect(() => {
+    if (selectedVideo) fetchComments(selectedVideo.id);
+  }, [selectedVideo]);
+
+  const postComment = async () => {
+    if (!newComment.trim() || !selectedVideo || !session) return;
+    const { error } = await supabase.from('comments').insert([
+      { video_id: selectedVideo.id, user_id: session.user.id, content: newComment }
+    ]);
+    if (!error) {
+      setNewPostComment('');
+      fetchComments(selectedVideo.id);
     }
   };
 
@@ -181,52 +217,24 @@ function App() {
       <header>
         <div className="logo">Deez<span>Hub</span></div>
         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-          <div 
-            className="theme-toggle" 
-            onClick={() => setDarkMode(!darkMode)}
-            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
+          <div className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
             <div className="toggle-circle"></div>
           </div>
-          <span style={{ fontSize: '0.9rem', color: '#666' }}>{session.user.email}</span>
-          <input 
-            type="file" 
-            accept="video/*,image/*" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            style={{ display: 'none' }}
-          />
-          <button 
-            className="upload-btn" 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? 'Posting...' : 'New Post'}
-          </button>
-          <button 
-            onClick={() => supabase.auth.signOut()}
-            style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.9rem' }}
-          >
-            Sign Out
-          </button>
+          <button className="upload-btn" onClick={() => setIsPostModalOpen(true)}>New Post</button>
+          <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', color: '#888' }}>Sign Out</button>
         </div>
       </header>
 
       <section className="hero-container" ref={heroRef}>
         <div className="hero-track">
           {infiniteImages.map((img, index) => (
-            <div key={index} className="hero-slide">
-              <img src={img} alt={`Slide ${index}`} />
-            </div>
+            <div key={index} className="hero-slide"><img src={img} alt="" /></div>
           ))}
         </div>
       </section>
 
       <div className="profile-section">
-        <div 
-          className="avatar-placeholder" 
-          style={{ backgroundImage: `url(${img1})` }}
-        />
+        <div className="avatar-placeholder" style={{ backgroundImage: `url(${img1})` }} />
         <div className="profile-info">
           <h2>Deez "Spicy" Satti</h2>
           <p>@AbdelBatti • 6.7M Likes • Premium Creator</p>
@@ -235,63 +243,80 @@ function App() {
 
       <main className="container">
         <div className="video-grid">
-          {videos.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '50px', backgroundColor: '#fff', border: '1px solid var(--border-color)' }}>
-              <p style={{ color: '#888' }}>No posts yet.</p>
-            </div>
-          ) : (
-            videos.map((video) => (
-              <div 
-                key={video.id} 
-                className="video-card" 
-                onClick={() => setSelectedVideo(video)}
-              >
-                <div className="video-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div className="mini-avatar" style={{ backgroundImage: `url(${img1})` }}></div>
-                    <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>User</div>
+          {videos.map((video) => (
+            <div key={video.id} className="video-card" onClick={() => setSelectedVideo(video)}>
+              <div className="video-card-header" style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div className="mini-avatar" style={{ backgroundImage: `url(${img1})` }} />
+                  <span style={{ fontWeight: 700 }}>User</span>
+                </div>
+                {(isAdmin || video.user_id === session.user.id) && (
+                  <div>
+                    <button className="options-btn" onClick={(e) => { e.stopPropagation(); setActiveMenuMenuId(activeMenuId === video.id ? null : video.id); }}>•••</button>
+                    {activeMenuId === video.id && (
+                      <div className="options-menu">
+                        <div className="options-item" onClick={(e) => { e.stopPropagation(); setVideoToDelete(video); setActiveMenuMenuId(null); }}>Delete Post</div>
+                      </div>
+                    )}
                   </div>
-                  {(isAdmin || video.user_id === session.user.id) && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); deleteVideo(video); }}
-                      style={{ background: 'none', border: 'none', color: '#e50914', cursor: 'pointer', fontWeight: 'bold' }}
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-                <div className="video-thumbnail" style={{ height: '200px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0' }}>
-                  {video.type === 'image' ? (
-                    <img src={video.url} alt={video.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <span style={{ fontSize: '3rem', opacity: 0.2 }}>▶</span>
-                  )}
-                </div>
-                <div className="video-info">
-                  <div className="video-title">{video.name}</div>
-                  <div className="video-meta">VIEW {video.type === 'image' ? 'PHOTO' : 'POST'}</div>
-                </div>
+                )}
               </div>
-            ))
-          )}
+              <div className="video-thumbnail">
+                {video.type === 'image' ? <img src={video.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '3rem', opacity: 0.2 }}>▶</span>}
+              </div>
+              <div className="video-info">
+                <div className="video-title">{video.caption || video.name}</div>
+                <div style={{ marginTop: 10, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>❤️ {video.like_count} Likes</div>
+              </div>
+            </div>
+          ))}
         </div>
       </main>
 
+      {/* New Post Modal */}
+      {isPostModalOpen && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal">
+            <h3>Create New Post</h3>
+            <textarea className="post-form-input" placeholder="Add a caption..." value={newPostCaption} onChange={(e) => setNewPostCaption(e.target.value)} />
+            <input type="file" accept="video/*,image/*" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} />
+            <div className="modal-buttons">
+              <button className="btn-confirm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>{uploading ? 'Uploading...' : 'Select Media'}</button>
+              <button className="btn-cancel" onClick={() => setIsPostModalOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {videoToDelete && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal">
+            <h3>Are you sure you want to delete this post?</h3>
+            <div className="modal-buttons">
+              <button className="btn-confirm" onClick={confirmDelete}>Yes, Delete</button>
+              <button className="btn-cancel" onClick={() => setVideoToDelete(null)}>No, Go Back</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Media Viewer Modal */}
       {selectedVideo && (
         <div className="modal-overlay" onClick={() => setSelectedVideo(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            {selectedVideo.type === 'image' ? (
-              <img src={selectedVideo.url} alt={selectedVideo.name} style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }} />
-            ) : (
-              <video controls autoPlay src={selectedVideo.url} style={{ width: '100%', maxHeight: '70vh' }}>
-                Your browser does not support the video tag.
-              </video>
-            )}
-            <div style={{ padding: '20px', backgroundColor: 'white' }}>
-              <h3>{selectedVideo.name}</h3>
-              <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>❤️ Like</button>
-                <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>💬 Comment</button>
+            {selectedVideo.type === 'image' ? <img src={selectedVideo.url} style={{ width: '100%', maxHeight: '60vh', objectFit: 'contain' }} /> : <video controls autoPlay src={selectedVideo.url} style={{ maxHeight: '60vh' }} />}
+            <div style={{ padding: 20, backgroundColor: 'var(--header-bg)', color: 'var(--text-color)' }}>
+              <h3>{selectedVideo.caption || selectedVideo.name}</h3>
+              <div style={{ display: 'flex', gap: 20, margin: '15px 0' }}>
+                <button onClick={(e) => handleLike(e, selectedVideo)} style={{ background: selectedVideo.has_liked ? '#ff8c00' : 'none', border: '1px solid #ddd', padding: '5px 15px', color: selectedVideo.has_liked ? 'black' : 'inherit' }}>❤️ {selectedVideo.like_count} Likes</button>
+              </div>
+              <div className="comments-container">
+                {comments.map(c => <div key={v4()} className="comment-item"><span className="comment-user">User:</span> {c.content}</div>)}
+              </div>
+              <div className="comment-input-group">
+                <input className="comment-input" value={newComment} onChange={(e) => setNewPostComment(e.target.value)} placeholder="Add a comment..." />
+                <button className="comment-submit" onClick={postComment}>Post</button>
               </div>
             </div>
           </div>
@@ -300,5 +325,5 @@ function App() {
     </div>
   )
 }
-
+const v4 = () => Math.random().toString(36).substring(2, 9);
 export default App

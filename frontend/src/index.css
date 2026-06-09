@@ -306,6 +306,149 @@ header {
   font-size: 1.5rem;
 }
 
+/* Post Options (3 dots) */
+.options-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  padding: 5px;
+  cursor: pointer;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+.options-menu {
+  position: absolute;
+  right: 12px;
+  top: 45px;
+  background-color: var(--header-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 20;
+  overflow: hidden;
+}
+
+.options-item {
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e50914; /* Red for delete */
+  white-space: nowrap;
+}
+
+.options-item:hover {
+  background-color: var(--bg-color);
+}
+
+/* Custom Modal Styles */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.custom-modal {
+  background-color: var(--header-bg);
+  padding: 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.custom-modal h3 {
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btn-confirm {
+  background-color: #e50914;
+  color: white;
+}
+
+.btn-cancel {
+  background-color: #eee;
+  color: #444;
+}
+
+.dark-mode .btn-cancel {
+  background-color: #333;
+  color: #ccc;
+}
+
+/* New Post Form */
+.post-form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin-bottom: 20px;
+  font-family: inherit;
+  resize: none;
+}
+
+/* Comments Section */
+.comments-container {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.comment-item {
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.comment-user {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.comment-input-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.comment-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.comment-submit {
+  background-color: var(--accent-color);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
 video {
   width: 100%;
 }
