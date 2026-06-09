@@ -11,6 +11,7 @@ import img5 from './assets/IMG_7370.JPG'
 import img6 from './assets/IMG_7667.JPG'
 
 const bannerImages = [img1, img2, img3, img4, img5, img6];
+const infiniteImages = [...bannerImages, ...bannerImages];
 
 interface Video {
   id: string;
@@ -213,7 +214,7 @@ function App() {
 
       <section className="hero-container" ref={heroRef}>
         <div className="hero-track">
-          {bannerImages.map((img, index) => (
+          {infiniteImages.map((img, index) => (
             <div key={index} className="hero-slide">
               <img src={img} alt={`Slide ${index}`} />
             </div>

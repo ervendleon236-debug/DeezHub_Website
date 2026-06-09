@@ -122,7 +122,7 @@ header {
   background-color: var(--accent-hover);
 }
 
-/* Hero Carousel (Scrollable) */
+/* Hero Carousel (Scrollable & Auto-Scrolling) */
 .hero-container {
   position: relative;
   height: 500px;
@@ -131,19 +131,30 @@ header {
   overflow-y: hidden;
   background-color: #000;
   margin-bottom: -60px;
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
-  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   display: flex;
 }
 
 .hero-container::-webkit-scrollbar {
-  display: none; /* Hide scrollbar for Chrome/Safari */
+  display: none;
 }
 
 .hero-track {
   display: flex;
   height: 100%;
   width: max-content;
+  animation: scroll-infinite 40s linear infinite;
+  will-change: transform;
+}
+
+@keyframes scroll-infinite {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.hero-container:hover .hero-track {
+  animation-play-state: paused;
 }
 
 .hero-slide {
