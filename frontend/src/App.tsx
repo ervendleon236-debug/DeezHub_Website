@@ -11,7 +11,7 @@ import img5 from './assets/IMG_7370.JPG'
 import img6 from './assets/IMG_7667.JPG'
 
 const bannerImages = [img1, img2, img3, img4, img5, img6];
-const infiniteImages = [...bannerImages, ...bannerImages];
+const infiniteImages = [...bannerImages, ...bannerImages, ...bannerImages];
 
 interface Comment {
   id: string;
@@ -63,18 +63,48 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
+    const heroEl = heroRef.current;
+    if (!heroEl) return;
+
+    let requestRef: number;
+    const speed = 0.5; // Adjusted for smoothness
+
+    const scroll = () => {
+      if (heroEl) {
+        heroEl.scrollLeft += speed;
+        
+        const setWidth = heroEl.scrollWidth / 3;
+        if (heroEl.scrollLeft >= setWidth * 2) {
+          heroEl.scrollLeft -= setWidth;
+        } else if (heroEl.scrollLeft <= 0) {
+          heroEl.scrollLeft += setWidth;
+        }
+      }
+      requestRef = requestAnimationFrame(scroll);
+    };
+
+    // Initialize position to the middle set
+    setTimeout(() => {
+        if (heroEl) {
+            const setWidth = heroEl.scrollWidth / 3;
+            heroEl.scrollLeft = setWidth;
+        }
+    }, 100);
+
+    requestRef = requestAnimationFrame(scroll);
+
     const handleWheel = (e: WheelEvent) => {
-      if (heroRef.current && e.deltaY !== 0) {
+      if (e.deltaY !== 0) {
         e.preventDefault();
-        heroRef.current.scrollLeft += e.deltaY;
+        heroEl.scrollLeft += e.deltaY;
       }
     };
-    const heroEl = heroRef.current;
-    if (heroEl) {
-      heroEl.addEventListener('wheel', handleWheel, { passive: false });
-    }
+
+    heroEl.addEventListener('wheel', handleWheel, { passive: false });
+
     return () => {
-      if (heroEl) heroEl.removeEventListener('wheel', handleWheel);
+      cancelAnimationFrame(requestRef);
+      heroEl.removeEventListener('wheel', handleWheel);
     };
   }, []);
 

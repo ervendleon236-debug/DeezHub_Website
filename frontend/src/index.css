@@ -152,17 +152,7 @@ header {
   display: flex;
   height: 100%;
   width: max-content;
-  animation: scroll-infinite 40s linear infinite;
   will-change: transform;
-}
-
-@keyframes scroll-infinite {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.hero-container:hover .hero-track {
-  animation-play-state: paused;
 }
 
 .hero-slide {
