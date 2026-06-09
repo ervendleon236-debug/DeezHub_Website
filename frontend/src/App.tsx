@@ -99,7 +99,15 @@ function App() {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      const isVideo = ['mp4', 'webm', 'ogg', 'mov'].includes(fileExt || '');
+      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt || '');
+      
+      if (!isVideo && !isImage) {
+        alert('Unsupported file type. Please upload a video or image.');
+        return;
+      }
+
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
 
@@ -119,7 +127,8 @@ function App() {
           { 
             name: file.name, 
             url: publicUrl, 
-            user_id: session.user.id 
+            user_id: session.user.id,
+            type: isVideo ? 'video' : 'image'
           }
         ]);
 
@@ -127,7 +136,7 @@ function App() {
       
       fetchVideos();
     } catch (error) {
-      console.error('Error uploading video:', error);
+      console.error('Error uploading file:', error);
       alert('Upload failed: ' + (error as any).message);
     } finally {
       setUploading(false);
@@ -136,11 +145,9 @@ function App() {
   };
 
   const deleteVideo = async (video: Video) => {
-    if (!window.confirm('Are you sure you want to delete this video?')) return;
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
     
     try {
-      // In a real app, you'd also delete the file from storage
-      // For now, let's just delete the database entry
       const { error } = await supabase
         .from('videos')
         .delete()
@@ -150,12 +157,12 @@ function App() {
       fetchVideos();
       if (selectedVideo?.id === video.id) setSelectedVideo(null);
     } catch (error) {
-      console.error('Error deleting video:', error);
+      console.error('Error deleting post:', error);
       alert('Delete failed');
     }
   };
 
-  const isAdmin = session?.user?.email === 'ervendleon236@gmail.com'; // Hardcoded admin for you
+  const isAdmin = session?.user?.email === 'ervendleon236@gmail.com';
 
   if (!session) {
     return (
@@ -252,12 +259,16 @@ function App() {
                     </button>
                   )}
                 </div>
-                <div className="video-thumbnail">
-                  <span style={{ fontSize: '3rem', opacity: 0.2 }}>▶</span>
+                <div className="video-thumbnail" style={{ height: '200px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0' }}>
+                  {video.type === 'image' ? (
+                    <img src={video.url} alt={video.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ fontSize: '3rem', opacity: 0.2 }}>▶</span>
+                  )}
                 </div>
                 <div className="video-info">
                   <div className="video-title">{video.name}</div>
-                  <div className="video-meta">VIEW POST</div>
+                  <div className="video-meta">VIEW {video.type === 'image' ? 'PHOTO' : 'POST'}</div>
                 </div>
               </div>
             ))
@@ -280,29 +291,6 @@ function App() {
               <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
                 <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>❤️ Like</button>
                 <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>💬 Comment</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default App
-'20px', cursor: 'pointer' }}>❤️ Like</button>
-                <button style={{ background: 'none', border: '1px solid #ddd', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>💬 Comment</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default App
-: '20px', cursor: 'pointer' }}>💬 Comment</button>
               </div>
             </div>
           </div>
