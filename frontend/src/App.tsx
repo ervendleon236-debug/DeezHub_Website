@@ -262,7 +262,18 @@ function App() {
                 )}
               </div>
               <div className="video-thumbnail">
-                {video.type === 'image' ? <img src={video.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '3rem', opacity: 0.2 }}>▶</span>}
+                {video.type === 'image' ? (
+                  <img src={video.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <video 
+                    src={video.url} 
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                )}
               </div>
               <div className="video-info">
                 <div className="video-title">{video.caption || video.name}</div>
@@ -309,10 +320,22 @@ function App() {
             <div style={{ padding: 20, backgroundColor: 'var(--header-bg)', color: 'var(--text-color)' }}>
               <h3>{selectedVideo.caption || selectedVideo.name}</h3>
               <div style={{ display: 'flex', gap: 20, margin: '15px 0' }}>
-                <button onClick={(e) => handleLike(e, selectedVideo)} style={{ background: selectedVideo.has_liked ? '#ff8c00' : 'none', border: '1px solid #ddd', padding: '5px 15px', color: selectedVideo.has_liked ? 'black' : 'inherit' }}>❤️ {selectedVideo.like_count} Likes</button>
+                <button 
+                  onClick={(e) => handleLike(e, selectedVideo)} 
+                  style={{ 
+                    background: selectedVideo.has_liked ? '#ff8c00' : 'none', 
+                    border: '1px solid #ddd', 
+                    padding: '8px 20px', 
+                    borderRadius: '30px', 
+                    color: selectedVideo.has_liked ? 'black' : 'inherit',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ❤️ {selectedVideo.like_count} Likes
+                </button>
               </div>
               <div className="comments-container">
-                {comments.map(c => <div key={v4()} className="comment-item"><span className="comment-user">User:</span> {c.content}</div>)}
+                {comments.map(c => <div key={c.id} className="comment-item"><span className="comment-user">User:</span> {c.content}</div>)}
               </div>
               <div className="comment-input-group">
                 <input className="comment-input" value={newComment} onChange={(e) => setNewPostComment(e.target.value)} placeholder="Add a comment..." />
@@ -325,5 +348,4 @@ function App() {
     </div>
   )
 }
-const v4 = () => Math.random().toString(36).substring(2, 9);
 export default App
